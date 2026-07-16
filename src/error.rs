@@ -6,7 +6,9 @@ pub enum EscrowError {
     #[error("Invalid Instruction")]
     InvalidInstruction,
     #[error("Missing signature")]
-    MissingRequiredSignature
+    MissingRequiredSignature,
+    #[error("No rent exempt")]
+    NotRentExempt
 }
 
 impl From<EscrowError> for ProgramError {

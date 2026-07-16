@@ -1,13 +1,16 @@
 use solana_program::{
-    account_info::{AccountInfo, next_account_info},
-    entrypoint::ProgramResult,
-    msg,
-    pubkey::Pubkey,
-    program_error::ProgramError
+    account_info::{AccountInfo, next_account_info}, 
+    entrypoint::ProgramResult, 
+    msg, 
+    program_error::ProgramError, 
+    pubkey::Pubkey, 
+    rent::Rent, 
+    sysvar::SysvarSerialize
     
 };
 
 use crate::instruction::EscrowInstruction;
+use crate::error::EscrowError;
 
 pub struct Processor;
 
@@ -43,6 +46,16 @@ impl Processor {
         }
 
         let escrow_account = next_account_info(account_info_iter)?;
+        let rent = &Rent::from_account_info(next_account_info(account_info_iter)?)?;
+
+        if !rent.is_exempt(escrow_account.lamports(), escrow_account.data_len()) {
+            return Err(EscrowError::NotRentExempt.into());
+        }
+        
+        let mut escrow_info = Escrow::unpack_unchecked(&escrow_account.try_borrow_data()?)?;
+        if escrow_info.is_initialized() {
+            return Err(ProgramError::AccountAlreadyInitialized);
+        }
 
         Ok(())
     }
