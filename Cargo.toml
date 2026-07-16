@@ -1,0 +1,12 @@
+[package]
+name = "native-rust-escrow"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+solana-program = "4.0.0"
+spl-token = {version = "9.0.0", features = ["no-entrypoint"]}
+thiserror = "1.0.24"
+
+[lib]
+crate-type = ["cdylib", "lib"]
