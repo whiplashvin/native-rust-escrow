@@ -7,6 +7,7 @@ edition = "2024"
 solana-program = "4.0.0"
 spl-token = {version = "9.0.0", features = ["no-entrypoint"]}
 thiserror = "1.0.24"
+arrayref = "0.3.6"
 
 [lib]
 crate-type = ["cdylib", "lib"]

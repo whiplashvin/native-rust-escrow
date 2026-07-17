@@ -524,6 +524,7 @@ dependencies = [
 name = "native-rust-escrow"
 version = "0.1.0"
 dependencies = [
+ "arrayref",
  "solana-program",
  "spl-token",
  "thiserror 1.0.69",
