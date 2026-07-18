@@ -237,13 +237,13 @@ export const initEscrow = async (
   const escrowAccount = Keypair.generate();
   const escrowProgramId = new PublicKey(escrowProgramIdString);
   const createEscrowAccountIx = SystemProgram.createAccount({
+    programId: escrowProgramId,
     space: ESCROW_ACCOUNT_DATA_LAYOUT.span,
     lamports: await connection.getMinimumBalanceForRentExemption(
       ESCROW_ACCOUNT_DATA_LAYOUT.span,
     ),
     fromPubkey: initializerAccount.publicKey,
     newAccountPubkey: escrowAccount.publicKey,
-    programId: escrowProgramId,
   });
 
   // 5) call your program's InitEscrow instruction (tag 0 + expectedAmount u64 LE)

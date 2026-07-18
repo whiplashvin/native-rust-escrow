@@ -8,7 +8,11 @@ pub enum EscrowError {
     #[error("Missing signature")]
     MissingRequiredSignature,
     #[error("No rent exempt")]
-    NotRentExempt
+    NotRentExempt,
+    #[error("Amount mismatch")]
+    ExpectedAmountMismatch,
+    #[error("Amount overflow")]
+    AmountOverflow
 }
 
 impl From<EscrowError> for ProgramError {
