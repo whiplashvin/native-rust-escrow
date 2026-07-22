@@ -302,3 +302,118 @@ test("initEscrow", async () => {
   expect(tempDecoded.owner).toBe(escrowPda);
   expect(tempDecoded.amount).toBe(100n);
 });
+
+test("exchange", async () => {
+  const taker = await generateKeyPairSigner();
+  svm.airdrop(taker.address, lamports(10_000_000_000n));
+
+  const [takerTokenYAcc] = await findAssociatedTokenPda({
+    owner: taker.address,
+    mint: mintY.address,
+    tokenProgram: TOKEN_PROGRAM_ADDRESS,
+  });
+
+  const [takerTokenXAcc] = await findAssociatedTokenPda({
+    owner: taker.address,
+    mint: mintX.address,
+    tokenProgram: TOKEN_PROGRAM_ADDRESS,
+  });
+
+  const setupMsg = pipe(
+    createTransactionMessage({ version: 0 }),
+    (m) => setTransactionMessageFeePayerSigner(initializer, m),
+    (m) => svm.setTransactionMessageLifetimeUsingLatestBlockhash(m),
+    (m) =>
+      appendTransactionMessageInstructions(
+        [
+          getCreateAssociatedTokenInstruction({
+            payer: taker,
+            ata: takerTokenYAcc,
+            owner: taker.address,
+            mint: mintY.address,
+          }),
+          getCreateAssociatedTokenInstruction({
+            payer: taker,
+            ata: takerTokenXAcc,
+            owner: taker.address,
+            mint: mintX.address,
+          }),
+          getMintToInstruction({
+            mint: mintY.address,
+            token: takerTokenYAcc,
+            mintAuthority: initializer,
+            amount: 100n,
+          }),
+        ],
+        m,
+      ),
+  );
+  const setupSigned = await signTransactionMessageWithSigners(setupMsg);
+  const setupResult = svm.sendTransaction(setupSigned);
+  if (setupResult instanceof FailedTransactionMetadata) {
+    throw new Error("taker setup failed: " + setupResult.err().toString());
+  }
+
+  const [escrowPda] = await getProgramDerivedAddress({
+    programAddress: programId,
+    seeds: [new TextEncoder().encode("escrow")],
+  });
+
+  const amountExpectedByTaker = 100n;
+  const data = new Uint8Array([
+    1,
+    ...getU64Encoder().encode(amountExpectedByTaker),
+  ]);
+
+  const exchangeIx = {
+    programAddress: programId,
+    accounts: [
+      { address: taker.address, role: AccountRole.WRITABLE_SIGNER },
+      { address: takerTokenYAcc, role: AccountRole.WRITABLE },
+      { address: takerTokenXAcc, role: AccountRole.WRITABLE },
+      { address: initializerTempTokenXAcc.address, role: AccountRole.WRITABLE },
+      { address: initializer.address, role: AccountRole.WRITABLE },
+      { address: initializerTokenYAcc, role: AccountRole.WRITABLE },
+      { address: escrowAcc.address, role: AccountRole.WRITABLE },
+      { address: TOKEN_PROGRAM_ADDRESS, role: AccountRole.READONLY },
+      { address: escrowPda, role: AccountRole.READONLY },
+    ],
+    data,
+  };
+
+  const exchangeMsg = pipe(
+    createTransactionMessage({ version: 0 }),
+    (m) => setTransactionMessageFeePayerSigner(taker, m),
+    (m) => svm.setTransactionMessageLifetimeUsingLatestBlockhash(m),
+    (m) => appendTransactionMessageInstructions([exchangeIx], m),
+  );
+  const exchangeSigned = await signTransactionMessageWithSigners(exchangeMsg);
+  const exchangeResult = svm.sendTransaction(exchangeSigned);
+  if (exchangeResult instanceof FailedTransactionMetadata) {
+    throw new Error(exchangeResult.err().toString());
+  }
+
+  const takerX = svm.getAccount(takerTokenXAcc);
+  expect(takerX.exists).toBe(true);
+  if (takerX.exists) {
+    expect(getTokenDecoder().decode(takerX.data).amount).toBe(100n);
+  }
+
+  const initY = svm.getAccount(initializerTokenYAcc);
+  expect(initY.exists).toBe(true);
+  if (initY.exists) {
+    expect(getTokenDecoder().decode(initY.data).amount).toBe(50n);
+  }
+
+  const takerY = svm.getAccount(takerTokenYAcc);
+  expect(takerY.exists).toBe(true);
+  if (takerY.exists) {
+    expect(getTokenDecoder().decode(takerY.data).amount).toBe(50n);
+  }
+
+  const initX = svm.getAccount(initializerTokenXAcc);
+  expect(initX.exists).toBe(true);
+  if (initX.exists) {
+    expect(getTokenDecoder().decode(initX.data).amount).toBe(0n);
+  }
+});

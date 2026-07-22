@@ -133,9 +133,9 @@ spl-token create-account <MINT_X> --owner bob.json
 
 ### End state
 
-| Account | X balance | Y balance |
-|---|---|---|
-| Alice | 100 | 0 (empty account) |
-| Bob | 0 (empty account) | 100 |
+| Account | X balance         | Y balance         |
+| ------- | ----------------- | ----------------- |
+| Alice   | 100               | 0 (empty account) |
+| Bob     | 0 (empty account) | 100               |
 
 From here, Alice can call `InitEscrow` to lock her X and Bob can call `Exchange` to complete the swap — for example through the UI in `escrow-ui-react/` (`npm install && npm run dev`).
