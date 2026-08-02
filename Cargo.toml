@@ -8,6 +8,12 @@ solana-program = "4.0.0"
 spl-token = {version = "9.0.0", features = ["no-entrypoint"]}
 thiserror = "1.0.24"
 arrayref = "0.3.6"
+borsh = "1.8.0"
 
 [lib]
 crate-type = ["cdylib", "lib"]
+
+[dev-dependencies]
+litesvm = "0.15.2"
+solana-sdk = "4"
+solana-system-interface = "3"

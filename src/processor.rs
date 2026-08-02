@@ -51,6 +51,11 @@ impl Processor {
         }
 
         let escrow_account = next_account_info(account_info_iter)?;
+        
+        if escrow_account.owner != program_id {
+            return Err(ProgramError::IncorrectProgramId);
+        }
+        
         let rent = &Rent::from_account_info(next_account_info(account_info_iter)?)?;
 
         if !rent.is_exempt(escrow_account.lamports(), escrow_account.data_len()) {

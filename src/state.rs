@@ -1,9 +1,11 @@
+use borsh::BorshDeserialize;
 use solana_program::{
     program_error::ProgramError,
     program_pack::{IsInitialized, Pack, Sealed}, 
     pubkey::Pubkey,
 };
 
+#[derive(BorshDeserialize)]
 pub struct Escrow {
     pub is_initialized: bool,
     pub initializer_pubkey: Pubkey,
